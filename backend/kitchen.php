@@ -1,0 +1,9 @@
+<?php
+if(!is_admin() && !can('can_use_kitchen')){echo '<div class="card">Kitchen permission denied.</div>';return;}
+?>
+<h1 class="h1">Kitchen Display</h1><p class="muted">This screen refreshes automatically.</p><div id="kgrid" class="grid"></div>
+<script>
+async function loadKitchen(){const r=await fetch('../api/kitchen.php');const j=await r.json();if(!j.ok)return;let h='';for(const o of j.orders){h+=`<div class="card"><div style="display:flex;justify-content:space-between"><h2>#${o.id}</h2><span class="pill">${o.table_no}</span></div>${o.items.map(i=>`<div style="padding:9px 0;border-bottom:1px solid #eee">${esc(i.item_name)} × <b>${i.qty}</b>${i.notes?`<div class="muted">${esc(i.notes)}</div>`:''}</div>`).join('')}<p><b>${esc(<?=json_encode(currency_symbol())?>)}${(+o.total).toFixed(2)}</b> · ${o.status}</p><div class="actions">${o.status==='new'?`<button class="btn" onclick="act(${o.id},'accepted')">ACCEPT</button>`:''}${['new','accepted'].includes(o.status)?`<button class="btn gold" onclick="act(${o.id},'preparing')">PREPARING</button>`:''}${o.status==='preparing'?`<button class="btn gold" onclick="act(${o.id},'ready')">READY</button>`:''}${o.status==='ready'?`<button class="btn" onclick="act(${o.id},'served')">SERVED</button>`:''}</div></div>`}document.getElementById('kgrid').innerHTML=h||'<div class="card">No active kitchen orders.</div>'}
+async function act(id,status){await fetch('../api/kitchen.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});loadKitchen()}
+function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}loadKitchen();setInterval(loadKitchen,4000);
+</script>
